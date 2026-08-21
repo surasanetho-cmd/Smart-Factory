@@ -1,6 +1,6 @@
 # Smart Factory
 
-Next.js app with Supabase Auth and database integration.
+Next.js app with Supabase and Google Sheets master data integration.
 
 ## Connect Supabase
 
@@ -30,11 +30,37 @@ curl http://localhost:3000/api/supabase/health
 
 You should see `{ "connected": true, "status": "ok", ... }`.
 
+## Google Sheets master (employees)
+
+The app reads employee master data from this shared Google Sheet:
+
+https://docs.google.com/spreadsheets/d/1BRk-wf2VLcCSaFTpXcTAN7FD6KLcoJq1iIzybWcvqQo/edit
+
+Columns: `employee_ID`, `prefix`, `first_Name`, `last_Name`, `position`, `level`, `department`
+
+Verify the connection:
+
+```bash
+curl http://localhost:3000/api/google-sheets/health
+curl "http://localhost:3000/api/master/employees?limit=5"
+```
+
+Optional: sync master data into Supabase
+
+1. Run the SQL in `supabase/migrations/20260821123000_employees_master.sql` in the Supabase SQL editor.
+2. Add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`.
+3. Trigger sync:
+
+```bash
+curl -X POST http://localhost:3000/api/master/employees/sync
+```
+
 ## What's included
 
-- `@supabase/supabase-js` and `@supabase/ssr` for browser, server, and middleware clients
-- Session refresh middleware in `src/middleware.ts`
-- Health check route at `/api/supabase/health`
+- Supabase SSR clients and session refresh middleware
+- Google Sheets CSV import for employee master data
+- Health checks at `/api/supabase/health` and `/api/google-sheets/health`
+- Employee API at `/api/master/employees`
 
 ## Environment variables
 
@@ -42,7 +68,9 @@ You should see `{ "connected": true, "status": "ok", ... }`.
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Public anon key (safe for browser) |
-| `SUPABASE_SERVICE_ROLE_KEY` | No | Server-only admin key — never expose to the client |
+| `SUPABASE_SERVICE_ROLE_KEY` | No | Server-only admin key for master sync |
+| `GOOGLE_SHEETS_MASTER_EMPLOYEES_ID` | No | Google Sheet ID (defaults to shared master sheet) |
+| `GOOGLE_SHEETS_MASTER_EMPLOYEES_GID` | No | Sheet tab gid (default `0`) |
 
 ## Scripts
 
