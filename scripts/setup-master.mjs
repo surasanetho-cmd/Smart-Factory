@@ -162,6 +162,60 @@ async function runMigration() {
   log("migrate", "master.users created successfully.");
 }
 
+async function exposeMasterSchema() {
+  if (!projectRef || !accessToken) {
+    return;
+  }
+
+  const configResponse = await fetch(
+    `https://api.supabase.com/v1/projects/${projectRef}/postgrest`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  if (!configResponse.ok) {
+    log("schema", "Could not read PostgREST config; you may need to expose master manually.");
+    return;
+  }
+
+  const config = await configResponse.json();
+  const schemas = String(config.db_schema ?? "public")
+    .split(",")
+    .map((schema) => schema.trim())
+    .filter(Boolean);
+
+  if (schemas.includes("master")) {
+    log("schema", "master schema is already exposed.");
+    return;
+  }
+
+  const nextSchemas = [...schemas, "master"].join(",");
+
+  const patchResponse = await fetch(
+    `https://api.supabase.com/v1/projects/${projectRef}/postgrest`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ db_schema: nextSchemas }),
+    },
+  );
+
+  if (!patchResponse.ok) {
+    const message = await patchResponse.text();
+    log("schema", `Could not expose master schema automatically: ${message}`);
+    return;
+  }
+
+  log("schema", "Exposed master schema in Supabase API settings.");
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+}
+
 async function fetchEmployeesFromSheet() {
   const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${sheetGid}`;
   const response = await fetch(exportUrl);
@@ -270,6 +324,7 @@ async function main() {
   console.log("Smart Factory automatic master setup\n");
 
   await runMigration();
+  await exposeMasterSchema();
   await syncUsers();
   await verifyUsers();
 
