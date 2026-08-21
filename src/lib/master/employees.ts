@@ -95,3 +95,8 @@ export function employeeToDbRow(employee: EmployeeMaster) {
     synced_at: new Date().toISOString(),
   };
 }
+
+export const MASTER_USERS_TABLE = {
+  schema: "master",
+  name: "users",
+} as const;

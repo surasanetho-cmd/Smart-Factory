@@ -2,6 +2,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import {
   employeeToDbRow,
   fetchEmployeesFromGoogleSheet,
+  MASTER_USERS_TABLE,
 } from "@/lib/master/employees";
 import { NextResponse } from "next/server";
 
@@ -18,6 +19,9 @@ function getServiceRoleClient() {
       autoRefreshToken: false,
       persistSession: false,
     },
+    db: {
+      schema: MASTER_USERS_TABLE.schema,
+    },
   });
 }
 
@@ -30,7 +34,7 @@ export async function POST() {
         synced: false,
         status: "missing_service_role",
         message:
-          "Add SUPABASE_SERVICE_ROLE_KEY to .env.local and run the employees_master migration in Supabase.",
+          "Add SUPABASE_SERVICE_ROLE_KEY to .env.local, run supabase/sql/master_users.sql in SQL Editor, and expose the master schema in Supabase API settings.",
       },
       { status: 503 },
     );
@@ -41,7 +45,7 @@ export async function POST() {
     const rows = employees.map(employeeToDbRow);
 
     const { error } = await supabase
-      .from("employees_master")
+      .from(MASTER_USERS_TABLE.name)
       .upsert(rows, { onConflict: "employee_id" });
 
     if (error) {
@@ -49,6 +53,7 @@ export async function POST() {
         {
           synced: false,
           status: "supabase_error",
+          table: `${MASTER_USERS_TABLE.schema}.${MASTER_USERS_TABLE.name}`,
           message: error.message,
         },
         { status: 502 },
@@ -58,6 +63,7 @@ export async function POST() {
     return NextResponse.json({
       synced: true,
       status: "ok",
+      table: `${MASTER_USERS_TABLE.schema}.${MASTER_USERS_TABLE.name}`,
       count: rows.length,
     });
   } catch (error) {

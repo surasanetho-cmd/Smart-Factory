@@ -49,7 +49,13 @@ export default function Home() {
                 href="/api/master/employees?limit=5"
                 className="inline-flex text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400"
               >
-                Preview employees
+                Preview employees (Sheet)
+              </Link>
+              <Link
+                href="/api/master/users?limit=5"
+                className="inline-flex text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+              >
+                Preview users (Supabase)
               </Link>
             </div>
           </section>

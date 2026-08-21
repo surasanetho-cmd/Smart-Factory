@@ -45,14 +45,16 @@ curl http://localhost:3000/api/google-sheets/health
 curl "http://localhost:3000/api/master/employees?limit=5"
 ```
 
-Optional: sync master data into Supabase
+Optional: sync master data into Supabase `master.users`
 
-1. Run the SQL in `supabase/migrations/20260821123000_employees_master.sql` in the Supabase SQL editor.
-2. Add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`.
-3. Trigger sync:
+1. Open **Supabase SQL Editor** and run the full script in `supabase/sql/master_users.sql`.
+2. Open **Project Settings → API → Exposed schemas** and add `master`.
+3. Add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`.
+4. Trigger sync:
 
 ```bash
 curl -X POST http://localhost:3000/api/master/employees/sync
+curl http://localhost:3000/api/master/users?limit=5
 ```
 
 ## What's included
